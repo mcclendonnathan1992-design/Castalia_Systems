@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>User Profile Manager</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 850px;
+      margin: 40px auto;
+      padding: 20px;
+    }
+
+    input, textarea, button {
+      width: 100%;
+      padding: 10px;
+      margin: 8px 0;
+      box-sizing: border-box;
+    }
+
+    button {
+      cursor: pointer;
+      font-weight: bold;
+    }
+
+    pre {
+      background: #f4f4f4;
+      padding: 15px;
+      overflow-x: auto;
+    }
+  </style>
+</head>
+<body>
+  <h1>User Profile Manager</h1>
+
+  <form id="profileForm">
+    <label>Email</label>
+    <input id="email" type="email" required placeholder="user@example.com">
+
+    <label>Full Name</label>
+    <input id="fullName" type="text" placeholder="John Smith">
+
+    <label>Role</label>
+    <input id="role" type="text" placeholder="Systems Engineer">
+
+    <label>Phone</label>
+    <input id="phone" type="text" placeholder="555-555-5555">
+
+    <label>Status</label>
+    <input id="status" type="text" placeholder="active">
+
+    <label>Notes</label>
+    <textarea id="notes" rows="4" placeholder="Profile notes"></textarea>
+
+    <button type="submit">Save / Update Profile</button>
+  </form>
+
+  <button onclick="loadProfile()">Load Profile by Email</button>
+  <button onclick="deleteProfile()">Delete Profile by Email</button>
+
+  <h2>Result</h2>
+  <pre id="result"></pre>
+
+  <script>
+    const resultBox = document.getElementById("result");
+
+    function getProfileFromForm() {
+      return {
+        email: document.getElementById("email").value,
+        fullName: document.getElementById("fullName").value,
+        role: document.getElementById("role").value,
+        phone: document.getElementById("phone").value,
+        status: document.getElementById("status").value,
+        notes: document.getElementById("notes").value
+      };
+    }
+
+    function fillForm(profile) {
+      document.getElementById("email").value = profile.email || "";
+      document.getElementById("fullName").value = profile.fullName || "";
+      document.getElementById("role").value = profile.role || "";
+      document.getElementById("phone").value = profile.phone || "";
+      document.getElementById("status").value = profile.status || "";
+      document.getElementById("notes").value = profile.notes || "";
+    }
+
+    function show(data) {
+      resultBox.textContent = JSON.stringify(data, null, 2);
+    }
+
+    document.getElementById("profileForm").addEventListener("submit", async function(event) {
+      event.preventDefault();
+
+      const profile = getProfileFromForm();
+
+      const response = await fetch("/profiles", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify(profile)
+      });
+
+      const data = await response.json();
+      show(data);
+    });
+
+    async function loadProfile() {
+      const email = document.getElementById("email").value;
+
+      if (!email) {
+        show({ error: "Enter an email first" });
+        return;
+      }
+
+      const response = await fetch(`/profiles/${encodeURIComponent(email)}`);
+      const data = await response.json();
+
+      if (response.ok) {
+        fillForm(data);
+      }
+
+      show(data);
+    }
+
+    async function deleteProfile() {
+      const email = document.getElementById("email").value;
+
+      if (!email) {
+        show({ error: "Enter an email first" });
+        return;
+      }
+
+      const response = await fetch(`/profiles/${encodeURIComponent(email)}`, {
+        method: "DELETE"
+      });
+
+      const data = await response.json();
+      show(data);
+    }
+  </script>
+</body>
+</html>
